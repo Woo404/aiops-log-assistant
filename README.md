@@ -124,14 +124,23 @@ Example response keys: `summary`, `probable_root_cause`, `severity`,
 `troubleshooting_steps`, `confidence`, `analysis_source` (`llm`|`rule_fallback`),
 `redaction_counts`.
 
-## Screenshots (placeholders — capture your own)
+## Screenshots
 
-1. **API response** — paste a `curl | jq` screenshot of `/analyze` on `samples/linux_oom.txt`
-2. **Grafana** — AIOps overview dashboard showing request rate + latency after a few calls
-3. **CI green** — GitHub Actions run with lint/test/docker passing
-4. **Cloud VM** — browser hitting `http://<ECS-IP>:8000/healthz`
+Real output from running this repo locally (rule-fallback mode, no LLM attached):
 
-Replace this section with your real images after you run the stack.
+**Lint + tests (15 passed)**
+
+![ruff and pytest](docs/screenshots/01_ruff_pytest.png)
+
+**`POST /analyze` on `samples/linux_disk_full.txt`**
+
+![analyze response](docs/screenshots/02_analyze_json.png)
+
+**`/metrics` excerpt (Prometheus)**
+
+![metrics](docs/screenshots/03_metrics_excerpt.png)
+
+To add after deploying the full stack: Grafana dashboard with live traffic, and the service reachable on a cloud VM (`/healthz`).
 
 ## Design decisions
 
