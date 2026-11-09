@@ -1,0 +1,144 @@
+---
+# Deploy the docker-compose stack to an Ubuntu host
+# (Alibaba Cloud ECS or AWS EC2).
+#
+# Usage:
+#   cp inventory.example.ini inventory.ini   # edit host/IP
+#   ansible-playbook -i inventory.ini deploy.yml
+#
+# Prerequisites on your laptop: ansible-core, SSH key access to the host.
+# On the host: Ubuntu 22.04+ recommended.
+
+- name: Deploy AI Ops Log Assistant stack
+  hosts: aiops
+  become: true
+  vars_files:
+    - group_vars/all.yml
+
+  tasks:
+    - name: Ensure apt cache is fresh
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install prerequisite packages
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+          - ufw
+          - python3
+        state: present
+
+    - name: Create Docker keyring directory
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+
+    - name: Add Docker apt key
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: "0644"
+
+    - name: Add Docker apt repository
+      ansible.builtin.apt_repository:
+        repo: >-
+          deb [arch={{ ansible_architecture | replace('x86_64','amd64') | replace('aarch64','arm64') }}
+          signed-by=/etc/apt/keyrings/docker.asc]
+          https://download.docker.com/linux/ubuntu
+          {{ ansible_distribution_release }} stable
+        filename: docker
+        state: present
+
+    - name: Install Docker Engine and Compose plugin
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+
+    - name: Ensure Docker service is running
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Create application directory
+      ansible.builtin.file:
+        path: "{{ app_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Sync project files to remote host
+      ansible.builtin.synchronize:
+        src: "{{ playbook_dir }}/../"
+        dest: "{{ app_dir }}/"
+        delete: false
+        rsync_opts:
+          - "--exclude=.git"
+          - "--exclude=.venv"
+          - "--exclude=__pycache__"
+          - "--exclude=.pytest_cache"
+          - "--exclude=ansible/inventory.ini"
+          - "--exclude=*.pyc"
+
+    - name: Configure UFW defaults
+      community.general.ufw:
+        direction: "{{ item.direction }}"
+        policy: "{{ item.policy }}"
+      loop:
+        - { direction: incoming, policy: deny }
+        - { direction: outgoing, policy: allow }
+      ignore_errors: true
+
+    - name: Allow required TCP ports through UFW
+      community.general.ufw:
+        rule: allow
+        port: "{{ item | string }}"
+        proto: tcp
+      loop: "{{ open_ports }}"
+      ignore_errors: true
+
+    - name: Enable UFW
+      community.general.ufw:
+        state: enabled
+      ignore_errors: true
+
+    - name: Build and start compose stack
+      ansible.builtin.command:
+        cmd: docker compose -p {{ compose_project_name }} up -d --build
+        chdir: "{{ app_dir }}"
+      register: compose_up
+      changed_when: "'Started' in compose_up.stderr or 'Creating' in compose_up.stderr or compose_up.rc == 0"
+
+    - name: Optionally pull Ollama model (can take several minutes)
+      ansible.builtin.command:
+        cmd: docker compose -p {{ compose_project_name }} exec -T ollama ollama pull {{ llm_model }}
+        chdir: "{{ app_dir }}"
+      when: pull_ollama_model | bool
+      async: 1800
+      poll: 30
+      ignore_errors: true
+
+    - name: Wait for API health endpoint
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ app_http_port }}/healthz"
+        status_code: 200
+      register: health
+      retries: 30
+      delay: 5
+      until: health.status == 200
+
+    - name: Show endpoints
+      ansible.builtin.debug:
+        msg:
+          - "API:        http://{{ ansible_host }}:{{ app_http_port }}/healthz"
+          - "Grafana:    http://{{ ansible_host }}:{{ grafana_http_port }} (admin/admin — change me)"
+          - "Prometheus: http://{{ ansible_host }}:{{ prometheus_http_port }}"
+          - "Remember to open the same ports in your cloud Security Group / firewall."
