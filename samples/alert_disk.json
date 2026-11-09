@@ -1,0 +1,14 @@
+{
+  "_comment": "SYNTHETIC Alertmanager-like firing alert — not from a real system",
+  "status": "firing",
+  "labels": {
+    "alertname": "NodeFilesystemAlmostOutOfSpace",
+    "instance": "ops-demo-02:9100",
+    "mountpoint": "/var",
+    "severity": "warning"
+  },
+  "annotations": {
+    "summary": "Filesystem /var is 95% full",
+    "description": "No space left on device risk on ops-demo-02:/var"
+  }
+}

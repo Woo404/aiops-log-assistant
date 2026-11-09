@@ -1,0 +1,5 @@
+# SYNTHETIC — fictional MySQL instance
+2026-11-08T10:22:01.100Z ERROR [conn=4421] Too many connections
+2026-11-08T10:22:01.105Z ERROR [conn=4422] Too many connections
+2026-11-08T10:22:05.200Z WARN  [InnoDB] Lock wait timeout exceeded; try restarting transaction
+2026-11-08T10:22:05.210Z ERROR [conn=4100] Deadlock found when trying to get lock; try restarting transaction

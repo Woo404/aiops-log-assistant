@@ -1,0 +1,4 @@
+# SYNTHETIC — fictional host "ops-demo-02"
+Nov  8 09:01:12 ops-demo-02 myapp[551]: ERROR failed to write /var/log/myapp/app.log: No space left on device
+Nov  8 09:01:12 ops-demo-02 myapp[551]: ERROR also failed spool /var/spool/myapp/queue.db: ENOSPC
+Nov  8 09:01:13 ops-demo-02 kernel: EXT4-fs (vda1): delayed block allocation failed for inode 1048576

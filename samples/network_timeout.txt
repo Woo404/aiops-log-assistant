@@ -1,0 +1,4 @@
+# SYNTHETIC — fictional microservice call path
+2026-11-08T11:00:00Z level=error msg="upstream request failed" err="dial tcp 10.20.30.40:8443: i/o timeout" service=api-gateway target=billing-svc
+2026-11-08T11:00:01Z level=error msg="upstream request failed" err="connection refused" service=api-gateway target=billing-svc
+2026-11-08T11:00:02Z level=warn  msg="circuit breaker open" service=api-gateway target=billing-svc

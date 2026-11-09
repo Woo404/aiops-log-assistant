@@ -1,0 +1,4 @@
+# SYNTHETIC — fictional Redis
+2026-11-08T12:30:00Z redis-cli: CLUSTERDOWN The cluster is down
+2026-11-08T12:30:01Z app: redis error MISCONF Redis is configured to save RDB snapshots, but is currently not able to persist on disk
+2026-11-08T12:30:02Z app: Connection reset by peer while talking to redis:6379
