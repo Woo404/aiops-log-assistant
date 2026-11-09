@@ -1,0 +1,18 @@
+---
+# Override via -e or host_vars; keep secrets out of git.
+app_dir: /opt/aiops-log-assistant
+compose_project_name: aiops
+app_http_port: 8000
+grafana_http_port: 3000
+prometheus_http_port: 9090
+ollama_http_port: 11434
+
+# Open these TCP ports with ufw (adjust for your cloud security group too)
+open_ports:
+  - 22
+  - "{{ app_http_port }}"
+  - "{{ grafana_http_port }}"
+  - "{{ prometheus_http_port }}"
+
+llm_model: qwen2.5:7b
+pull_ollama_model: true
